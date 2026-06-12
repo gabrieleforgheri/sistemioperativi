@@ -1,0 +1,40 @@
+#include <stdio.h>
+#include <stdlib.h>
+#include <unistd.h>
+#include <fcntl.h>
+#include <sys/wait.h>
+
+int main() {
+    int fd0 = open("data.txt", O_CREAT | O_TRUNC | O_RDWR, 0644);
+    if (fd0 < 0) {
+        perror("open");
+        exit(1);
+    }
+
+    write(fd0, "ABCDEFGH", 8);
+    close(fd0);
+
+    pid_t pid = fork();
+    if (pid < 0) {
+        perror("fork");
+        exit(1);
+    }
+
+    if (pid == 0) {
+        int fd = open("data.txt", O_RDONLY);
+        char ch;
+        read(fd, &ch, 1);
+        printf("Child read:  %c\n", ch);
+        close(fd);
+        exit(0);
+    }
+
+    int fd = open("data.txt", O_RDONLY);
+    char ch;
+    read(fd, &ch, 1);
+    printf("Parent read: %c\n", ch);
+    close(fd);
+
+    wait(NULL);
+    return 0;
+}

@@ -1,0 +1,49 @@
+#include <stdio.h>
+#include <stdlib.h>
+#include <unistd.h>
+#include <fcntl.h>
+#include <sys/wait.h>
+
+int main() {
+    int fd = open("data.txt", O_CREAT | O_TRUNC | O_RDWR, 0644);
+    if (fd < 0) {
+        perror("open");
+        exit(1);
+    }
+
+    write(fd, "ABCDEFGH", 8);
+    lseek(fd, 0, SEEK_SET);   // reset offset to start
+
+    pid_t c1 = fork();
+    if (c1 < 0) {
+        perror("fork");
+        exit(1);
+    }
+
+    if (c1 == 0) {
+        char ch;
+        read(fd, &ch, 1);
+        printf("Child 1 read: %c\n", ch);
+        close(fd);
+        exit(0);
+    }
+
+    pid_t c2 = fork();
+    if (c2 < 0) {
+        perror("fork");
+        exit(1);
+    }
+
+    if (c2 == 0) {
+        char ch;
+        read(fd, &ch, 1);
+        printf("Child 2 read: %c\n", ch);
+        close(fd);
+        exit(0);
+    }
+
+    wait(NULL);
+    wait(NULL);
+    close(fd);
+    return 0;
+}

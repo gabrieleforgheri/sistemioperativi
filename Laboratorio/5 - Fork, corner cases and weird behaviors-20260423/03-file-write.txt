@@ -1,0 +1,47 @@
+#include <stdio.h>
+#include <stdlib.h>
+#include <unistd.h>
+#include <fcntl.h>
+#include <sys/wait.h>
+
+void write_chars(int fd, char c) {
+    for (int i = 0; i < 10; i++) {
+        write(fd, &c, 1);
+        usleep(10000);
+    }
+}
+
+int main() {
+    int fd = open("mix.txt", O_CREAT | O_TRUNC | O_WRONLY, 0644);
+    if (fd < 0) {
+        perror("open");
+        exit(1);
+    }
+
+    pid_t c1 = fork();
+    if (c1 < 0) {
+        perror("fork");
+        exit(1);
+    }
+    if (c1 == 0) {
+        write_chars(fd, 'A');
+        close(fd);
+        exit(0);
+    }
+
+    pid_t c2 = fork();
+    if (c2 < 0) {
+        perror("fork");
+        exit(1);
+    }
+    if (c2 == 0) {
+        write_chars(fd, 'B');
+        close(fd);
+        exit(0);
+    }
+
+    wait(NULL);
+    wait(NULL);
+    close(fd);
+    return 0;
+}

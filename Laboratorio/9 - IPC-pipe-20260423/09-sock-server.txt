@@ -1,0 +1,71 @@
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+#include <unistd.h>
+#include <sys/socket.h>
+#include <sys/un.h>
+#define SOCKET_PATH "/tmp/sock"
+#define BUF_SIZE 25
+
+int main(void) {
+    int srv_fd, cli_fd;
+    struct sockaddr_un srv_addr, cli_addr;
+    socklen_t client_addr_len;
+    char wmsg[BUF_SIZE] = "Greetings from server!";
+
+    /* Create a Unix domain socket */
+    srv_fd=socket(AF_UNIX, SOCK_STREAM, 0);
+    if (srv_fd==-1) {
+        perror("socket"); 
+        return 1;
+    }
+    
+    unlink(SOCKET_PATH);
+    memset(&srv_addr, 0, sizeof(struct sockaddr_un));
+    srv_addr.sun_family=AF_UNIX;
+    strncpy(srv_addr.sun_path, SOCKET_PATH,sizeof(srv_addr.sun_path) - 1);
+
+    /* Bind the socket */
+    if (bind(srv_fd, (struct sockaddr *)&srv_addr, sizeof(struct sockaddr_un)) == -1) {
+        perror("bind"); 
+        return 1;
+    }
+    
+    /* Listen for incoming connections */
+    if (listen(srv_fd, 5) == -1) {
+        perror("listen"); 
+        return 1;
+    }
+
+    /* Accept a client connection */
+    client_addr_len = sizeof(struct sockaddr_un);
+    cli_fd = accept(srv_fd, (struct sockaddr*)&cli_addr, &client_addr_len);
+    if (cli_fd == -1) {
+        perror("accept");
+        return 1;
+    }
+
+    /* Write the message to the client socket */
+    if (write(cli_fd, wmsg, strlen(wmsg) + 1) == -1) {
+        perror("write");
+        return 1;
+    }
+
+    printf("Message sent: ’%s’\n", wmsg);
+
+    char rmsg[25];
+    ssize_t bytes_read;
+    bytes_read = read(cli_fd, rmsg, sizeof(rmsg) - 1);
+    if (bytes_read == -1){
+        perror("server read");
+    }
+    rmsg[bytes_read]='\0';
+
+    printf("Received %d bytes from client: %s\n",bytes_read, rmsg);    
+
+    /* Clean up */
+    close(cli_fd);
+    close(srv_fd);
+    unlink(SOCKET_PATH);
+    return 0;
+}

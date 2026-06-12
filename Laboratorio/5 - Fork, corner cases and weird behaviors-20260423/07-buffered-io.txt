@@ -1,0 +1,13 @@
+#include <stdio.h>
+#include <stdlib.h>
+#include <unistd.h>
+
+int main() {
+    printf("Hello");   // no newline, buffer may not be flushed yet
+    //printf("Hello\n");   // newline, buffer flushed immediately
+
+    fork();
+    fork();
+
+    return 0;
+}

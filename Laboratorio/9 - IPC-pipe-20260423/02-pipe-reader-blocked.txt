@@ -1,0 +1,60 @@
+// reader_blocks.c
+#include <stdio.h>
+#include <stdlib.h>
+#include <unistd.h>
+#include <string.h>
+#include <sys/wait.h>
+
+int main(void) {
+    int fd[2];
+    char buf[128];
+
+    if (pipe(fd) == -1) {
+        perror("pipe");
+        exit(EXIT_FAILURE);
+    }
+
+    pid_t pid = fork();
+    if (pid < 0) {
+        perror("fork");
+        exit(EXIT_FAILURE);
+    }
+
+    if (pid == 0) {
+        // Child: reader
+        close(fd[1]);  // close write end
+
+        printf("[child] About to read from empty pipe; this will block...\n");
+        fflush(stdout);
+
+        ssize_t n = read(fd[0], buf, sizeof(buf) - 1);
+        if (n < 0) {
+            perror("read");
+            exit(EXIT_FAILURE);
+        }
+
+        buf[n] = '\0';
+        printf("[child] read() returned, got %zd bytes: \"%s\"\n", n, buf);
+
+        close(fd[0]);
+        exit(EXIT_SUCCESS);
+    } else {
+        // Parent: writer
+        close(fd[0]);  // close read end
+
+        sleep(3);
+        const char *msg = "Hello through the pipe";
+        printf("[parent] Writing data now, child should unblock...\n");
+        fflush(stdout);
+
+        if (write(fd[1], msg, strlen(msg)) == -1) {
+            perror("write");
+            exit(EXIT_FAILURE);
+        }
+
+        close(fd[1]);
+        wait(NULL);
+    }
+
+    return 0;
+}

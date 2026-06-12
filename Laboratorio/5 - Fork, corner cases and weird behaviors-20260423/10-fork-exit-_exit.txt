@@ -1,0 +1,21 @@
+#include <stdio.h>
+#include <stdlib.h>
+#include <unistd.h>
+#include <sys/wait.h>
+
+int main() {
+    printf("Message before fork...");   // no newline, still buffered
+
+    pid_t pid = fork();
+    if (pid < 0) {
+        perror("fork");
+        exit(1);
+    }
+
+    if (pid == 0) {
+        exit(0);     // try replacing with _exit(0)
+    }
+
+    wait(NULL);
+    return 0; //return in main ultimately calls exit()
+}

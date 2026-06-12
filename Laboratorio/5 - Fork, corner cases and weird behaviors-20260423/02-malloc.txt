@@ -1,0 +1,51 @@
+#include <stdio.h>
+#include <stdlib.h>
+#include <unistd.h>
+#include <sys/wait.h>
+
+int main() {
+    int *p = malloc(sizeof(int));
+    if (p == NULL) {
+        perror("malloc");
+        exit(1);
+    }
+
+    *p = 100;
+    printf("Parent before forks: *p = %d, address = %p\n", *p, (void*)p);
+
+    pid_t c1 = fork();
+
+    if (c1 < 0) {
+        perror("fork");
+        exit(1);
+    }
+
+    if (c1 == 0) {
+        *p = 111;
+        printf("Child 1: *p = %d, address = %p\n", *p, (void*)p);
+        free(p);
+        _exit(0);
+    }
+
+    pid_t c2 = fork();
+
+    if (c2 < 0) {
+        perror("fork");
+        exit(1);
+    }
+
+    if (c2 == 0) {
+        *p = 222;
+        printf("Child 2: *p = %d, address = %p\n", *p, (void*)p);
+        free(p);
+        _exit(0);
+    }
+
+    wait(NULL);
+    wait(NULL);
+
+    printf("Parent after children: *p = %d, address = %p\n", *p, (void*)p);
+
+    free(p);
+    return 0;
+}

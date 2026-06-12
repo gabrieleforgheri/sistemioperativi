@@ -1,0 +1,68 @@
+#include <stdio.h>
+#include <stdlib.h>
+#include <unistd.h>
+#include <sys/wait.h>
+#include <errno.h>
+
+/* Simple primality test for non-negative long values */
+static int is_prime(long x) {
+    if (x < 2) return 0;
+    if (x == 2) return 1;
+    if (x % 2 == 0) return 0;
+    for (long d = 3; d * d <= x; d += 2) {
+        if (x % d == 0) return 0;
+    }
+    return 1;
+}
+
+int main(int argc, char *argv[]) {
+    if (argc < 2) {
+        fprintf(stderr, "Usage: %s <num1> [num2 ...]\n", argv[0]);
+        return 1;
+    }
+
+    int n_children = argc - 1;
+
+    // Fork one child per number
+    for (int i = 1; i < argc; i++) {
+        pid_t pid = fork();
+
+        if (pid < 0) {
+            perror("fork");
+            return 1;
+        }
+
+        if (pid == 0) {
+            // Child: parse the number and test primality
+            long x = atol(argv[i]); 
+
+            if (is_prime(x)) {
+                printf("pid=%ld: %ld is prime\n", (long)getpid(), x);
+                _exit(1);             // return 1 to parent
+            }
+
+            _exit(0);                 // return 0 to parent (and print nothing)
+        }
+
+        // Parent continues looping to create the next child
+    }
+
+    // Parent: wait for all children and count primes
+    int prime_count = 0;
+
+    for (int i = 0; i < n_children; i++) {
+        int status = 0;
+        pid_t w = wait(&status);
+
+        if (WIFEXITED(status)) {
+            int ret = WEXITSTATUS(status);  // 0 or 1
+            prime_count += ret;
+        } else {
+            // Abnormal termination -> treat as not prime (no increment)
+            fprintf(stderr, "Child PID=%ld terminated abnormally.\n", (long)w);
+        }
+    }
+
+    printf("Total primes: %d\n", prime_count);
+    return 0;
+}

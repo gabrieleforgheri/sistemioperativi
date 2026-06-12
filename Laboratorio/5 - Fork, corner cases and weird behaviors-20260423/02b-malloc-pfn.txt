@@ -1,0 +1,72 @@
+/*
+ * NOTE: this porgram must be run as root (e.g. with sudo) since
+ * the pagemap file is not accessible to unprivileged users!  
+ */
+
+#define _GNU_SOURCE
+#include <stdio.h>
+#include <stdlib.h>
+#include <stdint.h>
+#include <unistd.h>
+#include <sys/wait.h>
+#include <fcntl.h>
+
+uint64_t get_pfn(void *addr)
+{
+    uint64_t value;
+    int fd = open("/proc/self/pagemap", O_RDONLY);
+
+    if (fd < 0) {
+        perror("open pagemap");
+        exit(1);
+    }
+
+    size_t pagesize = getpagesize();
+    off_t offset = ((uintptr_t)addr / pagesize) * sizeof(uint64_t);
+
+    if (lseek(fd, offset, SEEK_SET) == -1) {
+        perror("lseek");
+        exit(1);
+    }
+
+    if (read(fd, &value, sizeof(value)) != sizeof(value)) {
+        perror("read");
+        exit(1);
+    }
+
+    close(fd);
+
+    if (!(value & (1ULL << 63))) {
+        printf("page not present\n");
+        return 0;
+    }
+
+    return value & ((1ULL << 55) - 1);   // PFN
+}
+
+int main()
+{
+    int *p = malloc(sizeof(int));
+    *p = 42;
+
+    printf("Parent virtual address: %p\n", p);
+    printf("Parent PFN before fork: %lu\n", get_pfn(p));
+
+    pid_t pid = fork();
+
+    if (pid == 0) {
+        printf("\nChild virtual address: %p\n", p);
+        printf("Child PFN before write: %lu\n", get_pfn(p));
+
+        *p = 100;   
+
+        printf("Child PFN after write: %lu\n", get_pfn(p));
+        _exit(0);
+    }
+
+    wait(NULL);
+
+    printf("\nParent PFN after child write: %lu\n", get_pfn(p));
+
+    return 0;
+}

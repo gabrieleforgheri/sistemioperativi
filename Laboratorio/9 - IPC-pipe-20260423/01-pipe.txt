@@ -1,0 +1,44 @@
+#include <sys/types.h>
+#include <stdio.h>
+#include <string.h>
+#include <unistd.h>
+#define BUF_SIZE 25
+#define READ_END 0
+#define WRITE_END 1
+
+int main(void) {
+    char wmsg[BUF_SIZE] = "Greetings"; //buffer containing message to be written to the pipe
+    char rmsg[BUF_SIZE]; //buffer that will contain message read from the pipe
+    int fd[2]; //write and read end of the pipe that will be created
+    pid_t pid;
+
+    /* create the pipe + fork*/
+    if (pipe(fd) == -1) {
+        perror("pipe"); return 1;
+    }
+    // pipe() successful! now fd[0] and fd[1] can be used as file descriptors!
+    //
+    pid = fork();
+
+    if (pid < 0) { /* error occurred */
+        perror("fork"); return 1;
+    }
+
+    if (pid > 0) { /* parent process */
+        /* close the unused end of the pipe */
+        close(fd[READ_END]);
+        /* write to the pipe */
+        write(fd[WRITE_END], wmsg, strlen(wmsg)+1);
+        /* close the write end of the pipe */
+        close(fd[WRITE_END]);
+    } else { /* child process */
+        /* close the unused end of the pipe */
+        close(fd[WRITE_END]);
+        /* read from the pipe */
+        read(fd[READ_END], rmsg, BUF_SIZE);
+        printf("read %s",rmsg);
+        /* close the read end of the pipe */
+        close(fd[READ_END]);
+    }
+    return 0;
+}

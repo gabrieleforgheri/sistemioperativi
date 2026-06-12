@@ -1,0 +1,72 @@
+#include <stdio.h>
+#include <stdlib.h>
+#include <unistd.h>
+#include <string.h>
+#include <sys/wait.h>
+#include <signal.h>
+
+static volatile sig_atomic_t sigpipe_received = 0;
+
+void handle_sigpipe(int sig){
+	sigpipe_received = 1;
+}
+
+int main(void) {
+    int fd[2];
+    char buf[1024];
+    memset(buf, 'B', sizeof(buf));
+
+    if (pipe(fd) == -1) {
+        perror("pipe");
+        exit(EXIT_FAILURE);
+    }
+
+    pid_t pid = fork();
+    if (pid < 0) {
+        perror("fork");
+        exit(EXIT_FAILURE);
+    }
+
+    if (pid == 0) {
+        // Child: acts as reader briefly, then closes the read end
+        close(fd[1]);  // close write end
+        printf("[Child] Holding read end open for 5 seconds, then closing it...\n");
+        sleep(5);
+        close(fd[0]);
+        printf("[Child] Read end closed\n");
+        exit(0);
+    } else {
+        // Parent: writer
+        close(fd[0]);  // close read end in parent
+
+	//install handler for sigpipe
+	struct sigaction sa = {0};
+	sa.sa_handler = handle_sigpipe;
+	sigemptyset(&sa.sa_mask);
+	sigaction(SIGPIPE, &sa, NULL);
+
+        printf("[Parent] Writing repeatedly; after child closes read end, SIGPIPE will terminate me\n");
+        fflush(stdout);
+
+        while (1) {
+            ssize_t n = write(fd[1], buf, sizeof(buf));
+	    
+	    if (sigpipe_received){
+		    printf("[Parent] child must have close the read end of the pipe...\n");
+		    sigpipe_received = 0;
+	    }
+            
+	    if (n == -1) {
+                perror("write");
+                break;
+            }
+            printf("[Parent] wrote %zd bytes\n", n);
+            sleep(1);
+        }
+
+        close(fd[1]);
+        wait(NULL);
+    }
+
+    return 0;
+}

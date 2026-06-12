@@ -1,0 +1,19 @@
+#include <stdio.h>
+#include <stdlib.h>
+#include <unistd.h>
+
+void cleanup(void) {
+    printf("cleanup handler executed\n");
+}
+
+int main() {
+    if (atexit(cleanup) != 0) {
+        perror("atexit");
+        exit(1);
+    }
+
+    printf("main is ending\n");
+
+     exit(0);
+    //_exit(0);
+}

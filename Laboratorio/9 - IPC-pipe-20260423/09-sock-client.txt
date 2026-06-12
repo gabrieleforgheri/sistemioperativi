@@ -1,0 +1,53 @@
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+#include <unistd.h>
+#include <sys/socket.h>
+#include <sys/un.h>
+#define SOCKET_PATH "/tmp/sock"
+#define BUF_SIZE 25
+
+int main(void) {
+  int cli_fd;
+  struct sockaddr_un srv_addr;
+  char rmsg[BUF_SIZE];
+  ssize_t bytes_read;
+
+  /* Create a unix socket */
+  cli_fd=socket(AF_UNIX, SOCK_STREAM, 0);
+  if (cli_fd==-1) {
+    perror("socket"); 
+    return 1;
+  }
+  
+  memset(&srv_addr, 0, sizeof(struct sockaddr_un));
+  srv_addr.sun_family = AF_UNIX;
+  strncpy(srv_addr.sun_path, SOCKET_PATH, sizeof(srv_addr.sun_path) - 1);
+  
+  /* Connect to the server socket */
+  if (connect(cli_fd, (struct sockaddr *)&srv_addr, sizeof(struct sockaddr_un)) == -1) {
+    perror("connect"); 
+    return 1;
+  }
+  
+  /* Read the message from the socket */
+  bytes_read = read(cli_fd, rmsg, sizeof(rmsg) - 1);
+
+  if (bytes_read == -1) {
+    perror("read"); 
+    return 1;
+  }
+  
+  rmsg[bytes_read] = '\0';
+  
+  printf("read: \"%s\"\n", rmsg);
+ 
+  // Write messages to the same socket (bidirectional!)
+  char* wmsg = "Greetings from client!"; 	
+  printf("now writing %s to server\n",wmsg);
+  ssize_t bytes_written = write(cli_fd, wmsg, strlen(wmsg)+1);
+  printf("Written %d bytes to server\n",bytes_written);
+  close(cli_fd);
+  return 0;
+}
+

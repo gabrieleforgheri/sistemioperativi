@@ -1,0 +1,21 @@
+"Razza", "Altezza Media cm", "Altezza SD cm", "Peso Medio kg", "Peso SD kg"
+"Arabo", 150, 5, 430, 25
+"Purosangue Inglese", 163, 6, 500, 30
+"Frisone", 160, 4, 600, 40
+"Shire", 178, 8, 950, 70
+"Clydesdale", 170,7, 850, 60
+"Appaloosa" 152, 5, 500, 35
+"Quarter Horse", 155, 5, 550, 40
+Andaluso, 157, 4, 530, 30
+Lipizzano, 156, 3, 520, 25
+Haflinger, 145 4, 450, 25
+Fjord, 142, 5, 450, 30
+"Sella Italiano", 165, 6, 550, 35
+Percheron, 170, 8, 900, 80
+"Belga da Tiro",     172, 7, 900, 75
+Mustang, 148, 6, 400    45
+"Pony Shetland", 102, 5 180, 20
+Connemara, 145, 4    400, 30
+Trakehner, 166, 5, 580, 35
+"Lusitano", 158, 4      540, 30
+"Oldenburg", 168, 5, 620, 40

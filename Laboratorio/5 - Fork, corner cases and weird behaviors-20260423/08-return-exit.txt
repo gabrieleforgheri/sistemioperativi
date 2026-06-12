@@ -1,0 +1,24 @@
+#include <stdio.h>
+#include <stdlib.h>
+
+void f1() {
+    printf("f1: before return\n");
+    return;
+    printf("f1: after return\n");
+}
+
+void f2() {
+    printf("f2: before exit\n");
+    exit(0);
+    printf("f2: after exit\n");
+}
+
+int main() {
+    f1();
+    printf("Back in main after f1\n");
+
+    f2();
+    printf("Back in main after f2\n");
+
+    return 0;
+}

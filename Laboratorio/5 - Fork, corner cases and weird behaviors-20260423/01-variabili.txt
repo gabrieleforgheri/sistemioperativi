@@ -1,0 +1,40 @@
+#include <stdio.h>
+#include <stdlib.h>
+#include <unistd.h>
+#include <sys/wait.h>
+
+int main() {
+    int x = 10;
+
+    pid_t c1 = fork();
+
+    if (c1 < 0) {
+        perror("fork");
+        exit(1);
+    }
+
+    if (c1 == 0) {
+        x += 1;
+        printf("Child 1: x = %d\n", x);
+        exit(0);
+    }
+
+    pid_t c2 = fork();
+
+    if (c2 < 0) {
+        perror("fork");
+        exit(1);
+    }
+
+    if (c2 == 0) {
+        x += 2;
+        printf("Child 2: x = %d\n", x);
+        exit(0);
+    }
+
+    wait(NULL);
+    wait(NULL);
+
+    printf("Parent : x = %d\n", x);
+    return 0;
+}

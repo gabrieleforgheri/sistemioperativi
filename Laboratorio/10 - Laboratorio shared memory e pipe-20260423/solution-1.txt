@@ -1,0 +1,174 @@
+#include <ctype.h>
+#include <signal.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+#include <sys/mman.h>
+#include <sys/wait.h>
+#include <unistd.h>
+
+#define SHM_SIZE 1024
+
+static volatile sig_atomic_t sigint_received = 0;
+static volatile sig_atomic_t sigusr1_received = 0;
+static volatile sig_atomic_t sigusr2_received = 0;
+
+static void handle_sigusr1(int sig) {
+    sigusr1_received = 1;
+}
+
+static void handle_sigusr2(int sig) {
+    sigusr2_received = 1;
+}
+
+static void handle_sigint(int sig) {
+    sigint_received = 1;
+}
+
+static void install_handler(int signo, void (*handler)(int)) {
+    struct sigaction sa = {0};
+    sa.sa_handler = handler;
+    sigemptyset(&sa.sa_mask);
+
+    if (sigaction(signo, &sa, NULL) == -1) {
+        perror("sigaction");
+        exit(EXIT_FAILURE);
+    }
+}
+
+static void to_uppercase(char *s) {
+    for (; *s != '\0'; ++s) {
+        *s = (char)toupper((unsigned char)*s);
+    }
+}
+
+int main(void) {
+    char *shared_mem = mmap(NULL, SHM_SIZE,
+                            PROT_READ | PROT_WRITE,
+                            MAP_SHARED | MAP_ANONYMOUS,
+                            -1, 0);
+    if (shared_mem == MAP_FAILED) {
+        perror("mmap");
+        return EXIT_FAILURE;
+    }
+
+    shared_mem[0] = '\0';
+
+    pid_t pid = fork();
+    if (pid < 0) {
+        perror("fork");
+        munmap(shared_mem, SHM_SIZE);
+        return EXIT_FAILURE;
+    }
+
+    if (pid == 0) { // this is the main loop of the child process
+        /* Child process */
+        install_handler(SIGUSR1, handle_sigusr1);
+        install_handler(SIGINT, handle_sigint);
+
+        while (1) {
+            while (!sigusr1_received && !sigint_received) {
+                /* this is a "guarded loop" for the pause() syscall
+                 * pause() will return control to the main for any signal
+                 * we want to continue pausing until we get a sigusr1 or a sigint
+                 */
+                pause();
+            }
+
+            /* we are out of the guarded loop, gence we got either a sigusr1 or a sigint
+             * if we got a sigint we exit from the main loop and terminate cleanly
+             * if we got a sigusr1 a new iteration of the main loop begins */
+
+            if (sigint_received) {
+                break;
+            }
+
+            sigusr1_received = 0;
+
+            char buffer[SHM_SIZE];
+            strncpy(buffer, shared_mem, SHM_SIZE - 1);
+            buffer[SHM_SIZE - 1] = '\0';
+
+            to_uppercase(buffer);
+            printf("Child read: %s", buffer);
+            fflush(stdout);
+
+            if (kill(getppid(), SIGUSR2) == -1) {
+                perror("kill(SIGUSR2)");
+                break;
+            }
+        }
+
+        if (munmap(shared_mem, SHM_SIZE) == -1) {
+            perror("munmap");
+        }
+
+        printf("[Child] exiting cleanly...\n");
+        _exit(EXIT_SUCCESS);
+    }
+
+    /* Parent process */
+    install_handler(SIGUSR2, handle_sigusr2);
+    install_handler(SIGINT, handle_sigint);
+
+    char input[SHM_SIZE];
+
+    while (1) { // This is the main loop of the parent process
+        printf("Enter a string: ");
+        fflush(stdout);
+
+        char* ret = fgets(input, sizeof(input), stdin); 
+
+        if (sigint_received) {
+            break;
+        }
+
+	if (ret == NULL) {
+	    /* could not read from stdin. EOF or other error conditions */
+	    break;	
+	}
+
+        strncpy(shared_mem, input, SHM_SIZE - 1);
+        shared_mem[SHM_SIZE - 1] = '\0';
+
+        sigusr2_received = 0;
+
+        if (kill(pid, SIGUSR1) == -1) {
+            perror("kill(SIGUSR1)");
+            break;
+        }
+
+        while (!sigusr2_received && !sigint_received) {
+	    /* this is a "guarded loop" for the pause() syscall
+	     * pause() will return control to the main for any signal
+	     * we want to continue pausing until we get a sigusr2 or a sigint
+	     */
+            pause(); 
+        }
+
+	/* we are out of the guarded loop, gence we got either a sigusr2 or a sigint
+	 * if we got a sigint we exit from the main loop and terminate cleanly
+	 * if we got a sigusr2 a new iteration of the main loop begins */
+
+        if (sigint_received) {
+            break;
+        }
+    }
+
+    if (kill(pid, SIGINT) == -1) {
+        perror("kill(SIGINT)");
+    }
+
+    if (waitpid(pid, NULL, 0) == -1) {
+        perror("waitpid");
+    }
+
+    if (munmap(shared_mem, SHM_SIZE) == -1) {
+        perror("munmap");
+        return EXIT_FAILURE;
+    }
+
+    printf("[Parent] exiting cleanly...\n");
+
+    return EXIT_SUCCESS;
+}

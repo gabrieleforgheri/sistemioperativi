@@ -1,0 +1,183 @@
+#include <ctype.h>
+#include <signal.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+#include <sys/mman.h>
+#include <sys/wait.h>
+#include <unistd.h>
+
+#define SHM_SIZE 1024
+
+#define EMPTY 0
+#define DATA_READY 1
+#define RESULT_READY 2
+
+typedef struct {
+    char input[SHM_SIZE];
+    char output[SHM_SIZE];
+    int status;
+} shared_data;
+
+static volatile sig_atomic_t sigint_received = 0;
+static volatile sig_atomic_t sigusr1_received = 0;
+static volatile sig_atomic_t sigusr2_received = 0;
+
+static void handle_sigusr1(int sig) {
+    sigusr1_received = 1;
+}
+
+static void handle_sigusr2(int sig) {
+    sigusr2_received = 1;
+}
+
+static void handle_sigint(int sig) {
+    sigint_received = 1;
+}
+
+static void install_handler(int signo, void (*handler)(int)) {
+    struct sigaction sa = {0};
+    sa.sa_handler = handler;
+    sigemptyset(&sa.sa_mask);
+
+    if (sigaction(signo, &sa, NULL) == -1) {
+        perror("sigaction");
+        exit(EXIT_FAILURE);
+    }
+}
+
+static void to_uppercase(char *s) {
+    for (; *s != '\0'; ++s) {
+        *s = (char)toupper((unsigned char)*s);
+    }
+}
+
+int main(void) {
+    shared_data *shm = mmap(NULL, sizeof(shared_data),
+                            PROT_READ | PROT_WRITE,
+                            MAP_SHARED | MAP_ANONYMOUS,
+                            -1, 0);
+    if (shm == MAP_FAILED) {
+        perror("mmap");
+        return EXIT_FAILURE;
+    }
+
+    shm->input[0] = '\0';
+    shm->output[0] = '\0';
+    shm->status = EMPTY;
+
+    pid_t pid = fork();
+    if (pid < 0) {
+        perror("fork");
+        munmap(shm, sizeof(shared_data));
+        return EXIT_FAILURE;
+    }
+
+    if (pid == 0) {
+        /* Child process */
+        install_handler(SIGUSR1, handle_sigusr1);
+        install_handler(SIGINT, handle_sigint);
+
+        while (1) {
+            while (!sigusr1_received && !sigint_received) {
+                pause();
+            }
+
+            if (sigint_received) {
+                break;
+            }
+
+	    // I must have received a sigint, there should be some work to do!
+            sigusr1_received = 0;
+
+            if (shm->status == DATA_READY) {
+		/* there is new data to process in the input buffer
+		 * of the data structure in shared memory    
+		 * 1- copy ot to the output buffer
+		 * 2- convert the output buffer to uppercase
+		 * 3- set the status to RESULT_READY
+		 * 4- notify the parent that we are done for this iteration
+		 * 5- go back to pausing
+		 */
+                strncpy(shm->output, shm->input, SHM_SIZE - 1);
+                shm->output[SHM_SIZE - 1] = '\0'; 
+
+                to_uppercase(shm->output);
+                shm->status = RESULT_READY;
+
+                if (kill(getppid(), SIGUSR2) == -1) {
+                    perror("kill(SIGUSR2)");
+                    break;
+                }
+            }
+        }
+
+        if (munmap(shm, sizeof(shared_data)) == -1) {
+            perror("munmap");
+        }
+
+        printf("[Child] exiting...\n");
+        _exit(EXIT_SUCCESS);
+    }
+
+    /* Parent process */
+    install_handler(SIGUSR2, handle_sigusr2);
+    install_handler(SIGINT, handle_sigint);
+
+    char input[SHM_SIZE];
+
+    while (1) {
+        printf("Enter a string: ");
+        fflush(stdout);
+
+        char* ret = fgets(input, sizeof(input), stdin);
+
+        if (sigint_received) {
+            break;
+        }
+
+        if (ret == NULL){
+ 	    break;
+        }
+
+        strncpy(shm->input, input, SHM_SIZE - 1);
+        shm->input[SHM_SIZE - 1] = '\0';
+        shm->status = DATA_READY;
+
+        sigusr2_received = 0;
+
+        if (kill(pid, SIGUSR1) == -1) {
+            perror("kill(SIGUSR1)");
+            break;
+        }
+
+        while (!sigusr2_received && !sigint_received) {
+            pause();
+        }
+
+        if (sigint_received) {
+            break;
+        }
+
+        if (shm->status == RESULT_READY) {
+            printf("Parent read processed string: %s\n", shm->output);
+
+            shm->status = EMPTY;
+        }
+    }
+
+    if (kill(pid, SIGINT) == -1) {
+        perror("kill(SIGINT)");
+    }
+
+    if (waitpid(pid, NULL, 0) == -1) {
+        perror("waitpid");
+    }
+
+    if (munmap(shm, sizeof(shared_data)) == -1) {
+        perror("munmap");
+        return EXIT_FAILURE;
+    }
+
+    return EXIT_SUCCESS;
+}

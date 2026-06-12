@@ -1,0 +1,60 @@
+2026-06-03 08:00:01 INFO user=alice action=login status=OK ip=192.168.1.10
+2026-06-03 08:01:17 INFO user=bob action=read file=/var/www/index.html status=OK ip=192.168.1.11
+2026-06-03 08:02:44 WARNING user=carol action=login status=FAIL ip=10.0.0.45
+2026-06-03 08:03:09 ERROR service=auth message="authentication failed" user=dave ip=203.0.113.77
+2026-06-03 08:04:31 INFO user=alice action=logout status=OK ip=192.168.1.10
+2026-06-03 08:05:02 DENIED user=eve action=access file=/etc/shadow ip=198.51.100.23
+2026-06-03 08:06:48 INFO service=backup message="daily backup completed" size=2048MB
+2026-06-03 08:07:12 FAIL service=db message="connection timeout" retries=3 ip=192.168.1.20
+2026-06-03 08:08:35 INFO user=frank action=download file=report.pdf bytes=18203 ip=192.168.1.14
+2026-06-03 08:09:51 ERROR kernel message="segmentation fault" process=worker pid=4312
+2026-06-03 08:10:07 WARNING user=guest action=login status=FAIL ip=203.0.113.99
+2026-06-03 08:10:13 WARNING user=guest action=login status=FAIL ip=203.0.113.99
+2026-06-03 08:10:20 WARNING user=guest action=login status=FAIL ip=203.0.113.99
+2026-06-03 08:11:03 ROOT user=root action=login status=OK ip=10.0.0.1
+2026-06-03 08:12:27 INFO service=web message="request completed" code=200 bytes=512
+2026-06-03 08:13:41 ERROR service=web message="internal server error" code=500 ip=198.51.100.42
+2026-06-03 08:14:05 INFO user=mallory action=upload file=image.png bytes=4096 ip=192.168.1.55
+2026-06-03 08:15:22 DENIED user=mallory action=execute command=/bin/sh ip=198.51.100.42
+2026-06-03 08:16:16 FAIL service=ssh message="invalid password" user=root ip=203.0.113.200
+2026-06-03 08:17:58 INFO service=scheduler message="job completed" job_id=1024
+2026-06-03 08:18:09 ERROR service=payment message="transaction failed" amount=9999 ip=198.51.100.88
+2026-06-03 08:19:31 INFO user=heidi action=read file=/home/heidi/notes.txt status=OK ip=192.168.1.18
+2026-06-03 08:20:57 WARNING service=firewall message="many connections from same host" count=1200 ip=203.0.113.200
+2026-06-03 08:21:20 INFO service=dns message="query resolved" domain=unimore.it ip=192.168.1.2
+2026-06-03 08:22:03 DENIED user=unknown action=access file=/admin/config.php ip=198.51.100.99
+2026-06-03 08:23:44 ERROR service=auth message="account locked after repeated failures" user=guest ip=203.0.113.99
+2026-06-03 08:24:02 INFO service=monitor message="cpu usage normal" value=23
+2026-06-03 08:25:36 FAIL service=api message="token validation failed" user=ivan ip=198.51.100.17
+2026-06-03 08:26:11 ROOT user=root action=execute command="cat /etc/passwd" ip=203.0.113.201
+2026-06-03 08:27:48 INFO user=judy action=logout status=OK ip=192.168.1.30
+2026-06-03 08:28:04 INFO service=mail message="message delivered" recipient=team@example.org
+2026-06-03 08:29:29 WARNING service=disk message="disk usage high" value=87
+2026-06-03 08:30:16 FAIL user=kate action=login message="wrong password" ip=198.51.100.61
+2026-06-03 08:31:55 INFO service=cache message="cache refresh completed" items=300
+2026-06-03 08:32:38 ERROR service=proxy message="upstream unavailable" host=backend-2
+2026-06-03 08:33:47 DENIED user=leo action=write file=/etc/sudoers ip=203.0.113.155
+2026-06-03 08:34:23 INFO user=mike action=read file=/tmp/data.csv status=OK ip=192.168.1.44
+2026-06-03 08:35:18 WARNING service=ids message="suspicious scan detected" src=198.51.100.90
+2026-06-03 08:36:40 ERROR FAIL service=database message="replication failed" node=db-3
+2026-06-03 08:37:11 INFO service=ntp message="clock synchronized" offset=2ms
+2026-06-03 08:38:53 ROOT user=root action=change_password target=service-account ip=10.0.0.1
+2026-06-03 08:39:26 INFO user=nina action=create file=/home/nina/todo.txt status=OK
+2026-06-03 08:40:07 DENIED user=oscar action=access file=/var/log/secure ip=198.51.100.70
+2026-06-03 08:41:45 FAIL service=vpn message="certificate validation failed" user=paul ip=203.0.113.71
+2026-06-03 08:42:19 INFO service=web message="static asset served" code=200 bytes=1432
+2026-06-03 08:43:33 ERROR service=worker message="job crashed" job_id=881
+2026-06-03 08:44:51 WARNING user=quinn action=login status=FAIL ip=203.0.113.140
+2026-06-03 08:45:02 WARNING user=quinn action=login status=FAIL ip=203.0.113.140
+2026-06-03 08:45:14 WARNING user=quinn action=login status=FAIL ip=203.0.113.140
+2026-06-03 08:46:09 INFO user=ruth action=login status=OK ip=192.168.1.50
+2026-06-03 08:47:27 DENIED ROOT user=root action=remote_shell ip=198.51.100.200
+2026-06-03 08:48:36 ERROR service=storage message="checksum mismatch" volume=data-1
+2026-06-03 08:49:58 INFO service=printer message="job completed" pages=12
+2026-06-03 08:50:22 FAIL service=oauth message="invalid refresh token" user=sam ip=203.0.113.83
+2026-06-03 08:51:44 INFO user=trudy action=download file=slides.pdf bytes=24576
+2026-06-03 08:52:03 ERROR DENIED service=waf message="blocked malicious request" path=/admin
+2026-06-03 08:53:37 WARNING service=loadbalancer message="backend latency high" value=950ms
+2026-06-03 08:54:16 ROOT user=root action=install package=unknown.rpm ip=203.0.113.202
+2026-06-03 08:55:40 INFO service=monitor message="memory usage normal" value=41
+2026-06-03 08:56:59 ERROR FAIL DENIED ROOT WARNING service=honeypot message="critical intrusion pattern" ip=198.51.100.250
