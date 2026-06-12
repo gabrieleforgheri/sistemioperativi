@@ -5,6 +5,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
+#DEFINE N 10
 
 /*
  * place here the flags that are initialized to 0
@@ -161,28 +162,52 @@ int main(int argc, char *argv[]) {
     printf("PID: %d\n", getpid());
     printf("Factoring numbers from %ld to %ld\n", nstart, nend);
 
+    int pid;
+
+    for(int i = 0; i<N; i++){
+        pid = fork();
+
+        if(pid < 0){
+            printf("[Errore grosso]\n");
+            return EXIT_FAILURE;
+        }
+        if(pid == 0){
+            //figlio dio can can dio dio can
+            for (long n = nstart; n <= nend; n++) {
+            int prime = is_prime(n, factored_count, prime_count, last_prime);
+            factored_count++;
+
+            if (prime) {
+                prime_count++;
+                last_prime = n;
+            }
+
+            /* just a check to avoid the corner case in which n==LONG_MAX. If this is the 
+            * case, the n++ in the for loop overflows n and we might never end the for loop
+            */ 
+            if (n == LONG_MAX) {
+                break;
+            }
+            if (handle_recived_signals(factored_count, prime_count, last_prime)) {
+                break;
+            }
+        }
+
+
+            break;
+        }
+        
+
+
+
+        
+    }
+    
+    
 
     /* this is the main loop, make sure to check for
      * received signals within this loop */
-    for (long n = nstart; n <= nend; n++) {
-        int prime = is_prime(n, factored_count, prime_count, last_prime);
-        factored_count++;
-
-        if (prime) {
-            prime_count++;
-            last_prime = n;
-        }
-
-	/* just a check to avoid the corner case in which n==LONG_MAX. If this is the 
-	 * case, the n++ in the for loop overflows n and we might never end the for loop
-	 */ 
-        if (n == LONG_MAX) {
-            break;
-        }
-        if (handle_recived_signals(factored_count, prime_count, last_prime)) {
-            break;
-        }
-    }
+    
 
     print_final_summary(factored_count,prime_count,last_prime);
 
