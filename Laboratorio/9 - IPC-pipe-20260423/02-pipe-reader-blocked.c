@@ -24,7 +24,7 @@ int main(void) {
         // Child: reader
         close(fd[1]);  // close write end
 
-        printf("[child] About to read from empty pipe; this will block...\n");
+        printf("[CHILD] About to read from empty pipe; this will block...\n");
         fflush(stdout);
 
         ssize_t n = read(fd[0], buf, sizeof(buf) - 1);
@@ -34,7 +34,7 @@ int main(void) {
         }
 
         buf[n] = '\0';
-        printf("[child] read() returned, got %zd bytes: \"%s\"\n", n, buf);
+        printf("[CHILD] read() returned, got %zd bytes: \"%s\"\n", n, buf);
 
         close(fd[0]);
         exit(EXIT_SUCCESS);
@@ -44,7 +44,7 @@ int main(void) {
 
         sleep(3);
         const char *msg = "Hello through the pipe";
-        printf("[parent] Writing data now, child should unblock...\n");
+        printf("[PARENT] Writing data now, child should unblock...\n");
         fflush(stdout);
 
         if (write(fd[1], msg, strlen(msg)) == -1) {

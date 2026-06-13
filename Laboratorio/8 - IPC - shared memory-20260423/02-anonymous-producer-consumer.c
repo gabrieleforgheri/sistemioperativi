@@ -33,28 +33,28 @@ int main() {
         // Child process. Let it be the consumer
         while(1) {  //infinite loop
             while (shm->ready == 0){   
-		    sleep(1); //if there is nothing to consume, sleep 1 second and try again
-	    };
-	    //there is something to consume!
+				sleep(1); //if there is nothing to consume, sleep 1 second and try again
+	        };
+	        //there is something to consume!
             printf("child consumed: %d\n", shm->value);
             shm->ready = 0;   // mark slot as empty
 	    
-	    if(shm->value == 10){
+			if(shm->value == 10){
                 munmap(shm,sizeof(struct shared_data));
-		_exit(0);		    
-            }
-	}
+				_exit(0);
+			}
+		}
     }
     
     // Parent = producer
     for (int i = 1; i <= 10; i++) {
         while (shm->ready == 1)	{
 		sleep(1); //if the shared value has not be consumed yet, sleep 1 second
-	}
+		}
 
         shm->value = i;
         printf("parent produced: %d\n", shm->value);
-	shm->ready = 1;   // mark slot as full
+		shm->ready = 1;   // mark slot as full
     }
 
     wait(NULL);

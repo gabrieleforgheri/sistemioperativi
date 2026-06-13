@@ -7,7 +7,7 @@
 #define WRITE_END 1
 
 int main(void) {
-    char wmsg[BUF_SIZE] = "Greetings"; //buffer containing message to be written to the pipe
+    char wmsg[BUF_SIZE] = "Greetings\n"; //buffer containing message to be written to the pipe
     char rmsg[BUF_SIZE]; //buffer that will contain message read from the pipe
     int fd[2]; //write and read end of the pipe that will be created
     pid_t pid;
