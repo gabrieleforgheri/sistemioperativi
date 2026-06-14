@@ -204,4 +204,5 @@ add_executable(sistemioperativi
         "Esecizi/shared memory/exercise-2.c"
         Esecizi/pipes/guess.c
         Esecizi/pipes/rps.c
+        Esecizi/pipes/rpsnp.c
 )

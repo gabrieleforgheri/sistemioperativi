@@ -1,0 +1,104 @@
+#include <errno.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+#include <sys/socket.h>
+#include <sys/un.h>
+#include <unistd.h>
+
+#define SOCKET_PATH "/tmp/concurrent.sock"
+
+typedef struct {
+    pid_t pid;
+    int wait_seconds;
+} RequestMsg;
+
+static ssize_t read_full(int fd, void *buf, size_t count) {
+    size_t done = 0;
+    char *p = buf;
+
+    while (done < count) {
+        ssize_t n = read(fd, p + done, count - done);
+        if (n == 0) {
+            return 0;
+        }
+        if (n < 0) {
+            if (errno == EINTR) {
+                continue;
+            }
+            return -1;
+        }
+        done += (size_t)n;
+    }
+    return (ssize_t)done;
+}
+
+static ssize_t write_full(int fd, const void *buf, size_t count) {
+    size_t done = 0;
+    const char *p = buf;
+
+    while (done < count) {
+        ssize_t n = write(fd, p + done, count - done);
+        if (n < 0) {
+            if (errno == EINTR) {
+                continue;
+            }
+            return -1;
+        }
+        done += (size_t)n;
+    }
+    return (ssize_t)done;
+}
+
+int main(void) {
+    int sock_fd;
+    struct sockaddr_un srv_addr;
+    RequestMsg req;
+    char dummy;
+    ssize_t n;
+
+    sock_fd = socket(AF_UNIX, SOCK_STREAM, 0);
+    if (sock_fd == -1) {
+        perror("socket");
+        return 1;
+    }
+
+    memset(&srv_addr, 0, sizeof(srv_addr));
+    srv_addr.sun_family = AF_UNIX;
+    strncpy(srv_addr.sun_path, SOCKET_PATH, sizeof(srv_addr.sun_path) - 1);
+
+    if (connect(sock_fd, (struct sockaddr *)&srv_addr, sizeof(srv_addr)) == -1) {
+        perror("connect");
+        close(sock_fd);
+        return 1;
+    }
+
+    req.pid = getpid();
+    req.wait_seconds = 5;
+
+    printf("[Client %d] Connected to %s\n", (int)req.pid, SOCKET_PATH);
+    printf("[Client %d] Sending request: pid=%d wait_seconds=%d\n",
+           (int)req.pid, (int)req.pid, req.wait_seconds);
+
+    if (write_full(sock_fd, &req, sizeof(req)) != (ssize_t)sizeof(req)) {
+        perror("write request");
+        close(sock_fd);
+        return 1;
+    }
+
+    while (1) {
+        n = read_full(sock_fd, &dummy, 1);
+        if (n == 0) {
+            break;
+        }
+        if (n < 0) {
+            perror("read");
+            close(sock_fd);
+            return 1;
+        }
+    }
+
+    printf("[Client %d] Server closed the connection. Exiting cleanly.\n", (int)req.pid);
+    close(sock_fd);
+    return 0;
+}
