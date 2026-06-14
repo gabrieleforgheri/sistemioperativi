@@ -131,9 +131,9 @@ add_executable(sistemioperativi
         "Laboratorio/9 - IPC-pipe-20260423/04b-pipe-sigpipe.txt"
         "Laboratorio/9 - IPC-pipe-20260423/05-pipe-ring.c"
         "Laboratorio/9 - IPC-pipe-20260423/06-pipe-star.c"
-        "Laboratorio/9 - IPC-pipe-20260423/07-pipe-struct.txt"
-        "Laboratorio/9 - IPC-pipe-20260423/08-mkfifo-receiver.txt"
-        "Laboratorio/9 - IPC-pipe-20260423/08-mkfifo-sender.txt"
+        "Laboratorio/9 - IPC-pipe-20260423/07-pipe-struct.c"
+        "Laboratorio/9 - IPC-pipe-20260423/08-mkfifo-receiver.c"
+        "Laboratorio/9 - IPC-pipe-20260423/08-mkfifo-sender.c"
         "Laboratorio/9 - IPC-pipe-20260423/09-sock-client.txt"
         "Laboratorio/9 - IPC-pipe-20260423/09-sock-server.txt"
         "Laboratorio/Shell/Dati per esercizi-20260604/access.log"
@@ -203,4 +203,5 @@ add_executable(sistemioperativi
         "Laboratorio/8 - IPC - shared memory-20260423/02-anonymous-producer-consumer.c"
         "Esecizi/shared memory/exercise-2.c"
         Esecizi/pipes/guess.c
+        Esecizi/pipes/rps.c
 )
