@@ -205,4 +205,9 @@ add_executable(sistemioperativi
         Esecizi/pipes/guess.c
         Esecizi/pipes/rps.c
         Esecizi/pipes/rpsnp.c
+        Esecizi/file.c
+        Esecizi/file/nonblocking.c
+        "Simulaizoni Esame/Materiale per lesercizio in C-20260604/log-pipe.c"
+        "Simulaizoni Esame/Materiale per lesercizio in C-20260604/log-shm.c"
+        "Simulaizoni Esame/Materiale per lesercizio in C-20260604/log-shm-summary.c"
 )
