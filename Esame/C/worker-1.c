@@ -19,30 +19,15 @@ int main(void) {
 
     pid_t pid = getpid();
 
-    size_t n;
-
-    char fifoname[64];
-    sprintf(fifoname, "/tmp/worker-%ld-fifo", (long)pid);
 
     int fd = open(REG_FIFO, O_WRONLY);
 
-    write(fd, &pid, sizeof(pid_t));
-
-    close(fd);
-
-    if(mkfifo(fifoname, 0666)  == -1 && errno != EEXIST){
-        perror("mkfifo");
+    if (write(fd, &pid, sizeof(pid_t)) == -1) {
+        perror("write");
         exit(1);
     }
-    
-    int fd = open(fifoname, O_WRONLY);
-
-    int indice;
-    size_t n = read(fd, &indice, sizeof(indice));
-    printf("Worker %ld - index %d\n", pid, indice);
 
     close(fd);
-
 
     return 0;
 }

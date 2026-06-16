@@ -210,4 +210,8 @@ add_executable(sistemioperativi
         "Simulaizoni Esame/Materiale per lesercizio in C-20260604/log-pipe.c"
         "Simulaizoni Esame/Materiale per lesercizio in C-20260604/log-shm.c"
         "Simulaizoni Esame/Materiale per lesercizio in C-20260604/log-shm-summary.c"
+        Esame/C/master-2.c
+        Esame/C/worker-2.c
+        Esame/C/master-3.c
+        Esame/C/worker-3.c
 )

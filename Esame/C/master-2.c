@@ -45,6 +45,20 @@ int main(int argc, char *argv[]) {
 
         if (readb == sizeof(pid_t)) {
             printf("Master: registration request received from PID %ld\n", (long)buf);
+
+            //START step 2
+            char fifoname[64];
+
+            snprintf(fifoname, sizeof(fifoname), "/tmp/worker-%ld-fifo", (long)buf);
+            int fdw = open(fifoname, O_WRONLY);
+            if (fdw == -1) {
+                perror("fifo open");
+                exit(1);
+            }
+            write(fdw, &i, sizeof(int));
+
+            printf("Master: sent index %d to worker %ld\n", i, (long)buf);
+            //END STEP 2
             i++;
         }
         else if (readb == 0) {
@@ -59,6 +73,7 @@ int main(int argc, char *argv[]) {
             perror("read");
             exit(1);
         }
+
     }
 
     close(fd);
